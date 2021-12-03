@@ -1,0 +1,60 @@
+name: Build VS2019.iso
+on: push
+
+jobs:
+  build:
+
+    runs-on: windows-2016
+    steps:
+      
+      - name: Check out repo
+        uses: actions/checkout@v2
+      
+      - name: Download vs_community 16
+        run: Invoke-webrequest -uri  https://aka.ms/vs/16/release/vs_community.exe -OutFile vs_community.exe
+        shell: powershell
+      
+      - name: Make cache
+        run: > 
+          .\vs_community.exe --layout "VS2019\Cache"
+          --add Microsoft.Net.Component.4.7.1.TargetingPack
+          --add Microsoft.Net.Component.4.7.2.TargetingPack
+          --add Microsoft.Net.Component.4.8.TargetingPack
+          --add Microsoft.NetCore.Component.Runtime.5.0
+          --add Microsoft.Net.Component.4.8.SDK
+          --add Microsoft.NetCore.Component.SDK
+          --add Microsoft.VisualStudio.Component.NuGet
+          --add Microsoft.VisualStudio.Component.NuGet.BuildTools
+          --add Microsoft.VisualStudio.Component.VC.Redist.14.Latest
+          --add Microsoft.VisualStudio.Workload.CoreEditor
+          --add Microsoft.VisualStudio.Workload.ManagedDesktop
+          --add Microsoft.VisualStudio.Workload.NetCoreTools
+          --add Microsoft.VisualStudio.Workload.NetCrossPlat
+          --lang en-US --passive
+        shell: cmd
+        
+      - name: Make setup.exe
+        run: .\BatToExeConverterX64.exe /bat SetupVS.bat /exe "VS2019\setup.exe" /icon VS.ico /x64 /invisible
+        shell : cmd
+        
+      - name: Make iso
+        run: .\MakeIso.ps1 VS2019 VS2019.iso
+        shell: powershell
+        
+      - name: Install 7Zip4Powershell
+        run: Install-Module -Name 7Zip4Powershell -Force;
+        shell: powershell
+          
+      - name: Compress and split assets to 1.5Gb (GitHub Release Upload Limit 2Gb)
+        run: Compress-7Zip -Path VS2019.iso -VolumeSize 1610612736 -ArchiveFileName "VS2019.7z"
+        shell: powershell
+          
+      - name: Publish release
+        uses: svenstaro/upload-release-action@v2
+        with:
+          repo_token: ${{ secrets.GITHUB_TOKEN }}
+          file: VS2019.7z.*
+          tag: VS2019
+          overwrite: true
+          file_glob: true
+          body: "This is release of VS2019 for programmers"
