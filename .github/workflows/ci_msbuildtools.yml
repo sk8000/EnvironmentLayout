@@ -5,6 +5,8 @@ jobs:
   build:
 
     runs-on: windows-2016
+    env:
+      BUILD_NAME: MSBuildTools2019
     steps:
       
       - name: Check out repo
@@ -16,7 +18,7 @@ jobs:
       
       - name: Make cache
         run: > 
-          .\vs_buildtools.exe --layout "MSBuildTools2019\Cache"
+          .\vs_buildtools.exe --layout "${{ env.BUILD_NAME }}\Cache"
           --add Microsoft.Net.Component.4.7.1.TargetingPack
           --add Microsoft.Net.Component.4.7.2.TargetingPack
           --add Microsoft.Net.Component.4.8.TargetingPack
@@ -30,19 +32,19 @@ jobs:
         shell: cmd
         
       - name: Make setup.exe
-        run: .\BatToExeConverterX64.exe /bat SetupMSBuildTools.bat /exe "MSBuildTools2019\setup.exe" /icon MSBuildTools.ico /x64 /invisible
+        run: .\BatToExeConverterX64.exe /bat Setup${{ env.BUILD_NAME }}.bat /exe "${{ env.BUILD_NAME }}\setup.exe" /icon ${{ env.BUILD_NAME }}.ico /x64 /invisible
         shell : cmd
         
       - name: Make iso
-        run: .\MakeIso.ps1 MSBuildTools2019 MSBuildTools2019.iso
+        run: .\MakeIso.ps1 ${{ env.BUILD_NAME }} ${{ env.BUILD_NAME }}.iso
         shell: powershell
           
       - name: Publish release
         uses: svenstaro/upload-release-action@v2
         with:
           repo_token: ${{ secrets.GITHUB_TOKEN }}
-          file: MSBuildTools2019.iso
-          asset_name: MSBuildTools2019.iso
-          tag: MSBuildTools2019
+          file: ${{ env.BUILD_NAME }}.iso
+          asset_name: ${{ env.BUILD_NAME }}.iso
+          tag: ${{ env.BUILD_NAME }}
           overwrite: true
-          body: "This is release of MSBuildTools2019 for all"
+          body: "This is release of ${{ env.BUILD_NAME }} for all"
