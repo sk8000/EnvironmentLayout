@@ -1,0 +1,48 @@
+name: Build MSBuildTools2019.iso
+on: push
+
+jobs:
+  build:
+
+    runs-on: windows-2016
+    steps:
+      
+      - name: Check out repo
+        uses: actions/checkout@v2
+      
+      - name: Download vs_buidtools 16
+        run: Invoke-webrequest -uri  https://aka.ms/vs/16/release/vs_buildtools.exe -OutFile vs_buildtools.exe
+        shell: powershell
+      
+      - name: Make cache
+        run: > 
+          .\vs_buildtools.exe --layout "MSBuildTools2019\Cache"
+          --add Microsoft.Net.Component.4.7.1.TargetingPack
+          --add Microsoft.Net.Component.4.7.2.TargetingPack
+          --add Microsoft.Net.Component.4.8.TargetingPack
+          --add Microsoft.NetCore.Component.Runtime.5.0
+          --add Microsoft.VisualStudio.Component.NuGet
+          --add Microsoft.VisualStudio.Component.NuGet.BuildTools
+          --add Microsoft.VisualStudio.Component.VC.Redist.14.Latest
+          --add Microsoft.VisualStudio.Workload.MSBuildTools
+          --add Microsoft.VisualStudio.Workload.NetCoreBuildTools
+          --lang en-US --passive
+        shell: cmd
+        
+      - name: Make setup.exe
+        run: .\BatToExeConverterX64.exe /bat SetupMSBuildTools.bat /exe "MSBuildTools2019\setup.exe" /icon MSBuildTools.ico /x64 /invisible
+        shell : cmd
+        
+      - name: Make iso
+        run: .\MakeIso.ps1 MSBuildTools2019 MSBuildTools2019.iso
+        shell: powershell
+          
+      - name: Publish release
+        uses: svenstaro/upload-release-action@v2
+        with:
+          repo_token: ${{ secrets.GITHUB_TOKEN }}
+          file: MSBuildTools2019.iso
+          asset_name: MSBuildTools2019.iso
+          tag: MSBuildTools2019
+          overwrite: true
+          body: "This is release of MSBuildTools2019 for all"
