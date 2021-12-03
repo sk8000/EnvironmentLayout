@@ -5,6 +5,8 @@ jobs:
   build:
 
     runs-on: windows-2016
+    env:
+      BUILD_NAME: VS2019
     steps:
       
       - name: Check out repo
@@ -16,7 +18,7 @@ jobs:
       
       - name: Make cache
         run: > 
-          .\vs_community.exe --layout "VS2019\Cache"
+          .\vs_community.exe --layout "${{ env.BUILD_NAME }}\Cache"
           --add Microsoft.Net.Component.4.7.1.TargetingPack
           --add Microsoft.Net.Component.4.7.2.TargetingPack
           --add Microsoft.Net.Component.4.8.TargetingPack
@@ -34,11 +36,11 @@ jobs:
         shell: cmd
         
       - name: Make setup.exe
-        run: .\BatToExeConverterX64.exe /bat SetupVS.bat /exe "VS2019\setup.exe" /icon VS.ico /x64 /invisible
+        run: .\BatToExeConverterX64.exe /bat Setup${{ env.BUILD_NAME }}.bat /exe "${{ env.BUILD_NAME }}\setup.exe" /icon ${{ env.BUILD_NAME }}.ico /x64 /invisible
         shell : cmd
         
       - name: Make iso
-        run: .\MakeIso.ps1 VS2019 VS2019.iso
+        run: .\MakeIso.ps1 ${{ env.BUILD_NAME }} ${{ env.BUILD_NAME }}.iso
         shell: powershell
         
       - name: Install 7Zip4Powershell
@@ -46,15 +48,15 @@ jobs:
         shell: powershell
           
       - name: Compress and split assets to 1.5Gb (GitHub Release Upload Limit 2Gb)
-        run: Compress-7Zip -Path VS2019.iso -VolumeSize 1610612736 -ArchiveFileName "VS2019.7z"
+        run: Compress-7Zip -Path ${{ env.BUILD_NAME }}.iso -VolumeSize 1610612736 -ArchiveFileName "${{ env.BUILD_NAME }}.7z"
         shell: powershell
           
       - name: Publish release
         uses: svenstaro/upload-release-action@v2
         with:
           repo_token: ${{ secrets.GITHUB_TOKEN }}
-          file: VS2019.7z.*
-          tag: VS2019
+          file: ${{ env.BUILD_NAME }}.7z.*
+          tag: ${{ env.BUILD_NAME }}
           overwrite: true
           file_glob: true
-          body: "This is release of VS2019 for programmers"
+          body: "This is release of ${{ env.BUILD_NAME }} for programmers"
