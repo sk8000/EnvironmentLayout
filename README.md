@@ -8,3 +8,5 @@ https://github.com/sk8000/EnvironmentLayout/releases/download/MSBuildTools2019/M
 # Download VS2019.iso
 https://github.com/sk8000/EnvironmentLayout/releases/download/VS2019/VS2019.7z.001<br />
 https://github.com/sk8000/EnvironmentLayout/releases/download/VS2019/VS2019.7z.002
+
+# New images
